@@ -11,11 +11,15 @@ open class TimeSpanItem(
     val endMs: Long
 ) : PlaylistItem {
 
+    var runningController: TimeSpanItemPlayerController? = null
+        private set
+
     override fun play(player: BasicPlayer) {
-        val controller = TimeSpanItemPlayerController.Factory.Slot.INSTANCE.create()
-        controller.init(this, player)
-        controller.register {
-            player.playMedia(file, true)
+        runningController = TimeSpanItemPlayerController.Factory.Slot.INSTANCE.create().also { controller ->
+            controller.init(this, player)
+            controller.register {
+                player.playMedia(file, true)
+            }
         }
     }
 
