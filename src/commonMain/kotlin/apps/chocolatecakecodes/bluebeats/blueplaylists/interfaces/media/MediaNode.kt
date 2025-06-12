@@ -23,7 +23,7 @@ sealed class MediaNode : Comparable<MediaNode> {
         override fun createCopy(): MediaDir = this
         override fun deepEquals(that: MediaDir?): Boolean = this === that
         override fun equals(that: Any?): Boolean = this === that
-        override fun hashCode(): Int = super.hashCode()
+        override fun hashCode(): Int = this::class.hashCode()
         override fun toString(): String = "MediaDir: $name"
     }
     object INVALID_FILE : MediaFile() {
@@ -37,7 +37,7 @@ sealed class MediaNode : Comparable<MediaNode> {
         override var userTags: List<String> = emptyList()
         override fun shallowEquals(that: MediaFile?): Boolean = this === that
         override fun equals(that: Any?): Boolean = this === that
-        override fun hashCode(): Int  = super.hashCode()
+        override fun hashCode(): Int = this::class.hashCode()
         override fun toString(): String = "MediaFile: $name"
     }
 
