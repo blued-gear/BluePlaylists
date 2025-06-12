@@ -3,6 +3,7 @@ package apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.dynamicplaylist
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.PlaylistIterator
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.PlaylistIterator.Companion.UNDETERMINED_COUNT
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.dynamicplaylist.rules.RuleGroup
+import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.items.MediaFileItem
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.items.PlaylistItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,11 +47,14 @@ class DynamicPlaylistIterator(
         if(repeat != PlaylistIterator.RepeatMode.ONE)
             seek(1)
 
-        return mediaBuffer[currentPosition]
+        return currentItem()
     }
 
     override fun currentItem(): PlaylistItem {
-        return mediaBuffer[currentPosition.coerceAtLeast(0)]
+        return if(mediaBuffer.isNotEmpty())
+            mediaBuffer[currentPosition.coerceAtLeast(0)]
+        else
+            MediaFileItem.INVALID
     }
 
     override fun seek(amount: Int) {
@@ -67,7 +71,10 @@ class DynamicPlaylistIterator(
                 generateItems(mediaBuffer, mediaBuffer.last())// retain last media and place at top
             }
 
-            currentPosition = 1// current media is at idx 0 but we want the next one
+            if(mediaBuffer.size > 1)
+                currentPosition = 1// current media is at idx 0 but we want the next one
+            else
+                currentPosition = 0
         } else if(newPos >= 0 && newPos < mediaBuffer.size) {
             currentPosition = newPos
 
