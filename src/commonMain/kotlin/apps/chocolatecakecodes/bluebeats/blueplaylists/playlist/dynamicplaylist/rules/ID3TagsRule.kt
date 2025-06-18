@@ -12,6 +12,7 @@ class ID3TagsRule(
     override var share: Share,
     override val isOriginal: Boolean,
     override val id: Long,
+    override var name: String = ""
 ) : Rule<ID3TagsRule> {
 
     private val tagValues = HashSet<String>()
@@ -57,7 +58,7 @@ class ID3TagsRule(
     }
 
     override fun copy(): ID3TagsRule {
-        return ID3TagsRule(share.copy(), false, id).apply {
+        return ID3TagsRule(share.copy(), false, id, name).apply {
             tagType = this@ID3TagsRule.tagType
             tagValues.addAll(this@ID3TagsRule.tagValues)
         }
@@ -67,6 +68,7 @@ class ID3TagsRule(
         tagType = other.tagType
         tagValues.addAll(other.tagValues)
         share = other.share.copy()
+        name = other.name
     }
 
     override fun equals(other: Any?): Boolean {
@@ -76,9 +78,10 @@ class ID3TagsRule(
         return this.tagType == other.tagType
                 && this.getTagValues() == other.getTagValues()
                 && this.share == other.share
+                && this.name == other.name
     }
 
     override fun hashCode(): Int {
-        return arrayOf<Any>(this::class.qualifiedName!!, tagType, getTagValues(), share).contentDeepHashCode()
+        return arrayOf<Any>(this::class.qualifiedName!!, tagType, getTagValues(), share, name).contentDeepHashCode()
     }
 }

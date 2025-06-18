@@ -7,7 +7,8 @@ import apps.chocolatecakecodes.bluebeats.blueplaylists.utils.*
 class RuleGroup(
     override val id: Long,
     override val isOriginal: Boolean,
-    override var share: Rule.Share,
+    override var share: Share,
+    override var name: String = "",
     var combineWithAnd: Boolean = false,
     rules: List<Pair<GenericRule, Boolean>> = emptyList()
 ) : Rule<RuleGroup> {
@@ -115,7 +116,7 @@ class RuleGroup(
     }
 
     override fun copy(): RuleGroup {
-        return RuleGroup(id, false, share.copy(), combineWithAnd).apply {
+        return RuleGroup(id, false, share.copy(), name, combineWithAnd).apply {
             this@RuleGroup.rules.map {
                 Pair(it.first.copy() as GenericRule, it.second)
             }.let {
@@ -131,6 +132,7 @@ class RuleGroup(
     override fun applyFrom(other: RuleGroup) {
         this.combineWithAnd = other.combineWithAnd
         this.share = other.share.copy()
+        this.name = other.name
 
         data class RuleId(val type: Int, val instance: Long)
 
@@ -204,10 +206,11 @@ class RuleGroup(
         return this.getRules() == other.getRules()
                 && this.combineWithAnd == other.combineWithAnd
                 && this.share == other.share
+                && this.name == other.name
     }
 
     override fun hashCode(): Int {
-        return arrayOf<Any>(this::class.qualifiedName!!, getRules(), combineWithAnd, share).contentDeepHashCode()
+        return arrayOf<Any>(this::class.qualifiedName!!, getRules(), combineWithAnd, share, name).contentDeepHashCode()
     }
 
     /**

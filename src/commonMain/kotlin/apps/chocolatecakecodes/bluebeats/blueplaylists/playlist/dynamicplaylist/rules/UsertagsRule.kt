@@ -11,7 +11,8 @@ class UsertagsRule(
     /** if true returned files will match all tags; if false returned files will match any of the tags */
     var combineWithAnd: Boolean = true,
     override val isOriginal: Boolean,
-    override val id: Long
+    override val id: Long,
+    override var name: String = "",
 ) : Rule<UsertagsRule> {
 
     private val tags = HashSet<String>()
@@ -53,7 +54,7 @@ class UsertagsRule(
     }
 
     override fun copy(): UsertagsRule {
-        return UsertagsRule(share.copy(), combineWithAnd, false, id).apply {
+        return UsertagsRule(share.copy(), combineWithAnd, false, id, name).apply {
             tags.addAll(this@UsertagsRule.tags)
         }
     }
@@ -63,6 +64,7 @@ class UsertagsRule(
         tags.addAll(other.tags)
         combineWithAnd = other.combineWithAnd
         share = other.share.copy()
+        name = other.name
     }
 
     override fun equals(other: Any?): Boolean {
@@ -72,10 +74,11 @@ class UsertagsRule(
         return this.getTags() == other.getTags()
                 && this.combineWithAnd == other.combineWithAnd
                 && this.share == other.share
+                && this.name == other.name
     }
 
     override fun hashCode(): Int {
-        return arrayOf<Any>(this::class.qualifiedName!!, getTags(), combineWithAnd, share).contentDeepHashCode()
+        return arrayOf<Any>(this::class.qualifiedName!!, getTags(), combineWithAnd, share, name).contentDeepHashCode()
     }
 
     private fun combineAnd(results: Map<MediaFile, List<String>>): Set<MediaFile> {

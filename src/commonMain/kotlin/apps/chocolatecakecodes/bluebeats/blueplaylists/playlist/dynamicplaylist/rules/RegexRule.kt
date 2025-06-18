@@ -12,7 +12,8 @@ class RegexRule(
     override val isOriginal: Boolean,
     var attribute: Attribute,
     regex: String,
-    initialShare: Rule.Share
+    initialShare: Share,
+    override var name: String = "",
 ) : Rule<RegexRule> {
 
     enum class Attribute {
@@ -52,7 +53,8 @@ class RegexRule(
             false,
             attribute,
             regex,
-            share.copy()
+            share.copy(),
+            name
         )
     }
 
@@ -63,16 +65,18 @@ class RegexRule(
         return this.attribute == other.attribute
                 && this.regex == other.regex
                 && this.share == other.share
+                && this.name == other.name
     }
 
     override fun hashCode(): Int {
-        return arrayOf<Any>(this::class.qualifiedName!!, attribute, regex).contentDeepHashCode()
+        return arrayOf<Any>(this::class.qualifiedName!!, attribute, regex, name).contentDeepHashCode()
     }
 
     override fun applyFrom(other: RegexRule) {
         attribute = other.attribute
         matcher = Regex(other.regex)
         share = other.share.copy()
+        name = other.name
     }
     //endregion
 

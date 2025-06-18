@@ -4,8 +4,6 @@ import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.items.PlaylistIt
 
 typealias GenericRule = Rule<*>
 
-//TODO maybe rules should have names
-
 /**
  * @param T type of the implementing class
  */
@@ -23,6 +21,8 @@ sealed interface Rule<T> {
     val isOriginal: Boolean
 
     var share: Share
+
+    var name: String
 
     /**
      * returns a collection of media from this rule

@@ -13,9 +13,10 @@ internal typealias DirPathInclude = Pair<MediaDir, Boolean>
 class IncludeRule(
     override val id: Long,
     override val isOriginal: Boolean,
+    initialShare: Share,
     dirs: Set<DirPathInclude> = emptySet(),
     files: Set<MediaFile> = emptySet(),
-    initialShare: Rule.Share
+    override var name: String = "",
 ) : Rule<IncludeRule> {
 
     private val dirs = HashMap<MediaDir, Boolean>(dirs.associate { it.first to it.second })
@@ -80,7 +81,14 @@ class IncludeRule(
     }
 
     override fun copy(): IncludeRule {
-        return IncludeRule(id, false, getDirs(), getFiles(), share.copy())
+        return IncludeRule(
+            id,
+            false,
+            share.copy(),
+            getDirs(),
+            getFiles(),
+            name
+        )
     }
 
     override fun applyFrom(other: IncludeRule) {
@@ -89,6 +97,7 @@ class IncludeRule(
         files.clear()
         files.addAll(other.files)
         share = other.share.copy()
+        name = other.name
     }
 
     override fun equals(other: Any?): Boolean {
@@ -98,10 +107,11 @@ class IncludeRule(
         return this.getFiles() == other.getFiles()
                 && this.getDirs() == other.getDirs()
                 && this.share == other.share
+                && this.name == other.name
     }
 
     override fun hashCode(): Int {
-        return arrayOf<Any>(this::class.qualifiedName!!, getFiles(), getDirs(), share).contentDeepHashCode()
+        return arrayOf<Any>(this::class.qualifiedName!!, getFiles(), getDirs(), share, name).contentDeepHashCode()
     }
 
     private fun expandDirs(): Set<MediaFile> {
