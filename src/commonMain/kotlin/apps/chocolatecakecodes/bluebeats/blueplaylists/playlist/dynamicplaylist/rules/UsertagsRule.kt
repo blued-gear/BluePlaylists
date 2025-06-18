@@ -7,7 +7,7 @@ import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.items.PlaylistIt
 import apps.chocolatecakecodes.bluebeats.blueplaylists.utils.takeOrAll
 
 class UsertagsRule(
-    override var share: Rule.Share,
+    override var share: Share,
     /** if true returned files will match all tags; if false returned files will match any of the tags */
     var combineWithAnd: Boolean = true,
     override val isOriginal: Boolean,

@@ -9,7 +9,7 @@ import apps.chocolatecakecodes.bluebeats.blueplaylists.utils.takeOrAll
 private const val LOG_TAG = "ID3TagsRule"
 
 class ID3TagsRule(
-    override var share: Rule.Share,
+    override var share: Share,
     override val isOriginal: Boolean,
     override val id: Long,
 ) : Rule<ID3TagsRule> {
