@@ -1,5 +1,6 @@
 package apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.dynamicplaylist.rules
 
+import apps.chocolatecakecodes.bluebeats.blueplaylists.interfaces.log.Logger
 import apps.chocolatecakecodes.bluebeats.blueplaylists.interfaces.storage.RuleStorage
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.items.PlaylistItem
 import apps.chocolatecakecodes.bluebeats.blueplaylists.utils.*
@@ -48,6 +49,9 @@ class RuleGroup(
                 -1
             }
         }
+        if(relativeAmount == 0 && relativeRules.isNotEmpty())
+            Logger.Slot.INSTANCE.warn("RuleGroup::generateItems",
+                "calculated amount for relative rules resulted in 0; try increasing your IterationSize")
         val relativeItems = relativeRules.map {
             val localAmount = if(amount >= 0 && !combineWithAnd) (relativeAmount * it.share.value).toInt() else -1
             it.generateItems(localAmount, excludeAcc)
@@ -57,6 +61,9 @@ class RuleGroup(
             (((1.0 - relativeRules.sumOf { it.share.value.toDouble() }) / evenRules.size) * relativeAmount).toInt()
         else
             -1
+        if(evenAmount == 0 && evenRules.isNotEmpty())
+            Logger.Slot.INSTANCE.warn("RuleGroup::generateItems",
+                "calculated amount for even rules resulted in 0; try increasing your IterationSize")
         val evenItems = evenRules.map {
             it.generateItems(evenAmount, excludeAcc)
         }
