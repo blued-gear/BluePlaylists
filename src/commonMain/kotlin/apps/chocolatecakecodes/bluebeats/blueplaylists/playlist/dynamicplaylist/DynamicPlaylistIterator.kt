@@ -5,10 +5,9 @@ import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.PlaylistIterator
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.dynamicplaylist.rules.RuleGroup
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.items.MediaFileItem
 import apps.chocolatecakecodes.bluebeats.blueplaylists.playlist.items.PlaylistItem
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.Volatile
 
 class DynamicPlaylistIterator(
@@ -20,8 +19,10 @@ class DynamicPlaylistIterator(
     private val pregeneratedMediaBuffer = ArrayList<PlaylistItem>(bufferSize + 1)
     @Volatile
     private var pregeneratedMediaBufferValid: Boolean = false
+    private val mediaBufferMutex = Mutex()
 
     override val totalItems: Int = UNDETERMINED_COUNT
+    @Volatile
     override var currentPosition: Int = -1
         private set
 
@@ -34,7 +35,7 @@ class DynamicPlaylistIterator(
         set(_) {
             // used to trigger regeneration
             val current = currentItem()
-            generateItems(mediaBuffer, currentItem())
+            withMediaBufferLock { generateItems(mediaBuffer, currentItem()) }
             seekToMedia(current)
         }
 
@@ -51,10 +52,12 @@ class DynamicPlaylistIterator(
     }
 
     override fun currentItem(): PlaylistItem {
-        return if(mediaBuffer.isNotEmpty())
-            mediaBuffer[currentPosition.coerceAtLeast(0)]
-        else
-            MediaFileItem.INVALID
+        return withMediaBufferLock {
+            if(mediaBuffer.isNotEmpty())
+                mediaBuffer[currentPosition.coerceAtLeast(0)]
+            else
+                MediaFileItem.INVALID
+        }
     }
 
     override fun seek(amount: Int) {
@@ -63,23 +66,25 @@ class DynamicPlaylistIterator(
         val newPos = currentPosition + amount
 
         if(newPos == mediaBuffer.size) {
-            if(pregeneratedMediaBufferValid) {
-                mediaBuffer.clear()
-                mediaBuffer.addAll(pregeneratedMediaBuffer)
-                pregeneratedMediaBufferValid = false
-            } else {
-                generateItems(mediaBuffer, mediaBuffer.last())// retain last media and place at top
-            }
+            withMediaBufferLock {
+                if(pregeneratedMediaBufferValid) {
+                    mediaBuffer.clear()
+                    mediaBuffer.addAll(pregeneratedMediaBuffer)
+                    pregeneratedMediaBufferValid = false
+                } else {
+                    generateItems(mediaBuffer, mediaBuffer.last())// retain last media and place at top
+                }
 
-            if(mediaBuffer.size > 1)
-                currentPosition = 1// current media is at idx 0 but we want the next one
-            else
-                currentPosition = 0
+                if(mediaBuffer.size > 1)
+                    currentPosition = 1// current media is at idx 0 but we want the next one
+                else
+                    currentPosition = 0
+            }
         } else if(newPos >= 0 && newPos < mediaBuffer.size) {
             currentPosition = newPos
 
             // pregenerate items if near end of current buffer
-            if(currentPosition == mediaBuffer.size - 2){
+            if(currentPosition >= mediaBuffer.size - 2){
                 CoroutineScope(Dispatchers.IO).launch {
                     pregeneratedMediaBufferValid = false
                     generateItems(pregeneratedMediaBuffer, mediaBuffer.last())// retain last media and place at top
@@ -96,11 +101,13 @@ class DynamicPlaylistIterator(
      * If the media could not be found in the buffer, it will be inserted after the current item.
      */
     fun seekToMedia(media: PlaylistItem) {
-        val idx = mediaBuffer.indexOf(media)
-        if(idx != -1) {
-            currentPosition = idx - 1
-        } else {
-            mediaBuffer.add(currentPosition + 1, media)
+        withMediaBufferLock {
+            val idx = mediaBuffer.indexOf(media)
+            if(idx != -1) {
+                currentPosition = idx - 1
+            } else {
+                mediaBuffer.add(currentPosition + 1, media)
+            }
         }
     }
 
@@ -119,5 +126,13 @@ class DynamicPlaylistIterator(
         if(prepend != null)
             dest.add(prepend)
         dest.addAll(rootRuleGroup.generateItems(bufferSize, toExclude).shuffled())
+    }
+
+    private inline fun <R> withMediaBufferLock(crossinline block: () -> R): R {
+        return runBlocking {
+            return@runBlocking mediaBufferMutex.withLock {
+                return@withLock block()
+            }
+        }
     }
 }
